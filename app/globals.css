@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: #000000;
+  color: #00ff41;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #008f11;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff41;
+}
+
+.glow-text {
+  text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 20px #00ff41;
+}
+
+.glow-border {
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.6), inset 0 0 8px rgba(0, 255, 65, 0.15);
+}
+
+.glitch-text {
+  position: relative;
+}
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  clip-path: inset(0 0 0 0);
+}
+.glitch-text::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff0033;
+  animation: glitchTop 2.5s infinite linear alternate-reverse;
+}
+.glitch-text::after {
+  left: -2px;
+  text-shadow: -2px 0 #00fff9;
+  animation: glitchBottom 2.5s infinite linear alternate-reverse;
+}
+
+@keyframes glitchTop {
+  0% { clip-path: inset(0 0 90% 0); }
+  20% { clip-path: inset(10% 0 60% 0); }
+  40% { clip-path: inset(40% 0 30% 0); }
+  60% { clip-path: inset(70% 0 10% 0); }
+  80% { clip-path: inset(20% 0 70% 0); }
+  100% { clip-path: inset(0 0 90% 0); }
+}
+@keyframes glitchBottom {
+  0% { clip-path: inset(90% 0 0 0); }
+  20% { clip-path: inset(60% 0 10% 0); }
+  40% { clip-path: inset(30% 0 40% 0); }
+  60% { clip-path: inset(10% 0 70% 0); }
+  80% { clip-path: inset(70% 0 20% 0); }
+  100% { clip-path: inset(90% 0 0 0); }
+}
+
+.terminal-cursor::after {
+  content: "█";
+  animation: blink 1s step-start infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.scanlines {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 255, 65, 0.03) 0px,
+    rgba(0, 255, 65, 0.03) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  mix-blend-mode: overlay;
+}
