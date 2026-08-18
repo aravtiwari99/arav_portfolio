@@ -1,12 +1,19 @@
 "use client";
 
+import { useEffect } from "react";
 import FloatingCard from "@/components/FloatingCard";
+import { playPopupSound } from "@/lib/soundEffects";
 
 interface WelcomePopupProps {
   onClose: () => void;
 }
 
 export default function WelcomePopup({ onClose }: WelcomePopupProps) {
+  useEffect(() => {
+    // Play sound when welcome popup mounts
+    playPopupSound();
+  }, []);
+
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black px-4">
       <FloatingCard variant="plain" speed={3.2}>

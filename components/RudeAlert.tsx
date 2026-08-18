@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import { triggerAlertFeedback } from "@/lib/soundEffects";
 
 interface RudeAlertProps {
   open: boolean;
@@ -13,6 +14,9 @@ export default function RudeAlert({ open, onClose }: RudeAlertProps) {
 
   useEffect(() => {
     if (open && boxRef.current) {
+      // Trigger alert sound and vibration
+      triggerAlertFeedback();
+      
       gsap.fromTo(
         boxRef.current,
         { scale: 0.7, opacity: 0 },

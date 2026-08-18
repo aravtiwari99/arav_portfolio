@@ -12,6 +12,7 @@ import LocationTracker from "@/components/LocationTracker";
 import WelcomePopup from "@/components/WelcomePopup";
 import SocialLinks from "@/components/SocialLinks";
 import { triggerFiveDownloads } from "@/lib/triggerDownloads";
+import { triggerClickFeedback } from "@/lib/soundEffects";
 
 // ProfilePhoto3D uses window-based tilt math — load client-side only
 const ProfilePhoto3D = dynamic(() => import("@/components/ProfilePhoto3D"), {
@@ -49,6 +50,7 @@ export default function Home() {
   const [pendingSection, setPendingSection] = useState<string | null>(null);
 
   const handleProtectedClick = (sectionId: string) => {
+    triggerClickFeedback();
     if (PROTECTED_SECTIONS.includes(sectionId)) {
       // show the rude red alert FIRST; the scroll/scare/downloads only
       // happen once the user acknowledges it
@@ -60,6 +62,7 @@ export default function Home() {
   };
 
   const handleRudeAlertClose = () => {
+    triggerClickFeedback();
     setRudeOpen(false);
     if (pendingSection) {
       document

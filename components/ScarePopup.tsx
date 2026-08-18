@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import { triggerWarnFeedback } from "@/lib/soundEffects";
 
 interface ScarePopupProps {
   open: boolean;
@@ -21,6 +22,9 @@ export default function ScarePopup({ open, onClose }: ScarePopupProps) {
 
   useEffect(() => {
     if (open && boxRef.current) {
+      // Trigger warning sound and vibration
+      triggerWarnFeedback();
+      
       gsap.fromTo(
         boxRef.current,
         { scale: 0.6, opacity: 0 },
