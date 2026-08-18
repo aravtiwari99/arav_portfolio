@@ -9,22 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "14.2.5",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "8.15.19",
+    "gsap": "3.12.5",
+    "next": "^14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "three": "0.160.0",
-    "@react-three/fiber": "8.15.19",
-    "@react-three/drei": "9.99.0",
-    "gsap": "3.12.5"
+    "sharp": "^0.35.3",
+    "three": "0.160.0"
   },
   "devDependencies": {
-    "typescript": "5.4.5",
     "@types/node": "20.12.12",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@types/three": "0.160.0",
-    "tailwindcss": "3.4.4",
+    "autoprefixer": "10.4.19",
     "postcss": "8.4.38",
-    "autoprefixer": "10.4.19"
+    "tailwindcss": "3.4.4",
+    "typescript": "5.4.5"
   }
 }
