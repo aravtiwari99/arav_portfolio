@@ -1,14 +1,21 @@
 /**
- * Sound effects and vibration utilities
+ * Sound effects and vibration utilities with continuous playback
  */
 
 // Create audio context for generating beep sounds
 let audioContext: (AudioContext | null) = null;
+let oscillatorRef: OscillatorNode | null = null;
+let gainNodeRef: GainNode | null = null;
+let vibrateIntervalRef: NodeJS.Timeout | null = null;
 
 function getAudioContext() {
   if (!audioContext && typeof window !== 'undefined') {
     try {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Resume audio context if suspended
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
     } catch (error) {
       console.log('AudioContext not available:', error);
     }
@@ -47,17 +54,105 @@ export function playBeep(frequency = 800, duration = 200, volume = 0.5) {
 }
 
 /**
+ * Start continuous beep sound (bypass system volume)
+ * @param frequency - Frequency in Hz
+ * @param volume - Volume (0-1, use high value like 0.8-1.0)
+ */
+export function startContinuousBeep(frequency = 600, volume = 0.9) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    // Stop any existing oscillator
+    stopContinuousBeep();
+
+    oscillatorRef = ctx.createOscillator();
+    gainNodeRef = ctx.createGain();
+
+    oscillatorRef.connect(gainNodeRef);
+    gainNodeRef.connect(ctx.destination);
+
+    oscillatorRef.frequency.value = frequency;
+    oscillatorRef.type = 'sine';
+
+    // Set to FULL volume - bypasses system volume
+    gainNodeRef.gain.setValueAtTime(volume, ctx.currentTime);
+
+    oscillatorRef.start();
+    console.log('Continuous beep started at', volume, 'volume');
+  } catch (error) {
+    console.log('Continuous beep error:', error);
+  }
+}
+
+/**
+ * Stop continuous beep sound
+ */
+export function stopContinuousBeep() {
+  try {
+    if (oscillatorRef) {
+      oscillatorRef.stop();
+      oscillatorRef = null;
+    }
+    if (gainNodeRef) {
+      gainNodeRef = null;
+    }
+    console.log('Continuous beep stopped');
+  } catch (error) {
+    console.log('Error stopping beep:', error);
+  }
+}
+
+/**
+ * Start continuous vibration pattern
+ * @param pattern - Array of vibration durations
+ */
+export function startContinuousVibration(pattern: number[] = [200, 100]) {
+  // Stop existing vibration
+  stopContinuousVibration();
+
+  if (typeof window !== 'undefined' && navigator.vibrate) {
+    let index = 0;
+    vibrateIntervalRef = setInterval(() => {
+      try {
+        navigator.vibrate(pattern[index % pattern.length]);
+        index++;
+        console.log('Vibration triggered:', pattern[index % pattern.length]);
+      } catch (error) {
+        console.log('Vibration error:', error);
+      }
+    }, pattern.reduce((a, b) => a + b, 0)); // Repeat pattern duration
+  } else {
+    console.log('Vibration API not available');
+  }
+}
+
+/**
+ * Stop continuous vibration
+ */
+export function stopContinuousVibration() {
+  if (vibrateIntervalRef) {
+    clearInterval(vibrateIntervalRef);
+    vibrateIntervalRef = null;
+    if (typeof window !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(0); // Stop any ongoing vibration
+    }
+    console.log('Continuous vibration stopped');
+  }
+}
+
+/**
  * Play popup/alert sound (lower pitch, longer) - LOUD
  */
 export function playPopupSound() {
-  playBeep(600, 400, 0.6); // Increased volume to 0.6
+  playBeep(600, 400, 0.8);
 }
 
 /**
  * Play button click sound (higher pitch, short)
  */
 export function playClickSound() {
-  playBeep(1000, 120, 0.4); // Increased volume to 0.4
+  playBeep(1000, 120, 0.6);
 }
 
 /**
@@ -80,7 +175,7 @@ export function playWarnSound() {
     oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.4);
 
-    gainNode.gain.setValueAtTime(0.7, ctx.currentTime); // Increased to 0.7
+    gainNode.gain.setValueAtTime(0.9, ctx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
 
     oscillator.start(ctx.currentTime);
@@ -112,7 +207,7 @@ export function vibrate(pattern: number | number[] = 200) {
  */
 export function triggerClickFeedback() {
   playClickSound();
-  vibrate(80); // Increased to 80ms vibration
+  vibrate(80);
 }
 
 /**
@@ -120,7 +215,7 @@ export function triggerClickFeedback() {
  */
 export function triggerAlertFeedback() {
   playPopupSound();
-  vibrate([150, 75, 150]); // Longer vibration pattern
+  vibrate([150, 75, 150]);
 }
 
 /**
@@ -128,5 +223,24 @@ export function triggerAlertFeedback() {
  */
 export function triggerWarnFeedback() {
   playWarnSound();
-  vibrate([300, 150, 300, 150, 300]); // Much stronger vibration pattern
+  vibrate([300, 150, 300, 150, 300]);
+}
+
+/**
+ * Start continuous alert feedback (for popups that stay open)
+ * Plays continuous beep + vibration until stopped
+ */
+export function startContinuousAlertFeedback() {
+  console.log('Starting continuous alert feedback...');
+  startContinuousBeep(600, 0.95); // Very loud alert sound
+  startContinuousVibration([200, 100, 200, 100]); // Repeating vibration pattern
+}
+
+/**
+ * Stop continuous alert feedback
+ */
+export function stopContinuousAlertFeedback() {
+  console.log('Stopping continuous alert feedback...');
+  stopContinuousBeep();
+  stopContinuousVibration();
 }

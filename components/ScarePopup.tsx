@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import { triggerWarnFeedback } from "@/lib/soundEffects";
+import { startContinuousAlertFeedback, stopContinuousAlertFeedback, triggerClickFeedback } from "@/lib/soundEffects";
 
 interface ScarePopupProps {
   open: boolean;
@@ -22,8 +22,8 @@ export default function ScarePopup({ open, onClose }: ScarePopupProps) {
 
   useEffect(() => {
     if (open && boxRef.current) {
-      // Trigger warning sound and vibration
-      triggerWarnFeedback();
+      // Start continuous beep + vibration when scare popup opens
+      startContinuousAlertFeedback();
       
       gsap.fromTo(
         boxRef.current,
@@ -37,15 +37,24 @@ export default function ScarePopup({ open, onClose }: ScarePopupProps) {
         yoyo: true,
         delay: 0.2,
       });
+    } else {
+      // Stop continuous beep + vibration when popup closes
+      stopContinuousAlertFeedback();
     }
   }, [open]);
+
+  const handleClose = () => {
+    triggerClickFeedback();
+    stopContinuousAlertFeedback();
+    onClose();
+  };
 
   if (!open) return null;
 
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         ref={boxRef}
@@ -69,7 +78,7 @@ export default function ScarePopup({ open, onClose }: ScarePopupProps) {
           (relax, it&apos;s just a portfolio 😄 — click anywhere to close)
         </p>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="mt-4 rounded border border-matrix-red px-4 py-1.5 text-sm text-matrix-red hover:bg-matrix-red hover:text-black transition-colors"
         >
           Close

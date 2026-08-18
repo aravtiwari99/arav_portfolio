@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import { triggerAlertFeedback } from "@/lib/soundEffects";
+import { startContinuousAlertFeedback, stopContinuousAlertFeedback, triggerClickFeedback } from "@/lib/soundEffects";
 
 interface RudeAlertProps {
   open: boolean;
@@ -14,8 +14,8 @@ export default function RudeAlert({ open, onClose }: RudeAlertProps) {
 
   useEffect(() => {
     if (open && boxRef.current) {
-      // Trigger alert sound and vibration
-      triggerAlertFeedback();
+      // Start continuous beep + vibration when alert opens
+      startContinuousAlertFeedback();
       
       gsap.fromTo(
         boxRef.current,
@@ -29,15 +29,24 @@ export default function RudeAlert({ open, onClose }: RudeAlertProps) {
         yoyo: true,
         delay: 0.15,
       });
+    } else {
+      // Stop continuous beep + vibration when alert closes
+      stopContinuousAlertFeedback();
     }
   }, [open]);
+
+  const handleClose = () => {
+    triggerClickFeedback();
+    stopContinuousAlertFeedback();
+    onClose();
+  };
 
   if (!open) return null;
 
   return (
     <div
       className="fixed inset-0 z-[250] flex items-center justify-center bg-black/85 px-4"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         ref={boxRef}
@@ -55,7 +64,7 @@ export default function RudeAlert({ open, onClose }: RudeAlertProps) {
           others..!!
         </p>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="mt-6 rounded border border-matrix-red px-6 py-2 text-sm text-matrix-red hover:bg-matrix-red hover:text-black transition-colors"
         >
           OK
