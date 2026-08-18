@@ -3,77 +3,90 @@
  */
 
 // Create audio context for generating beep sounds
-const audioContext = typeof window !== 'undefined' ? new (window.AudioContext || (window as any).webkitAudioContext)() : null;
+let audioContext: (AudioContext | null) = null;
+
+function getAudioContext() {
+  if (!audioContext && typeof window !== 'undefined') {
+    try {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch (error) {
+      console.log('AudioContext not available:', error);
+    }
+  }
+  return audioContext;
+}
 
 /**
  * Play a beep sound using Web Audio API
  * @param frequency - Frequency in Hz (default: 800)
  * @param duration - Duration in milliseconds (default: 200)
- * @param volume - Volume (0-1, default: 0.3)
+ * @param volume - Volume (0-1, default: 0.5)
  */
-export function playBeep(frequency = 800, duration = 200, volume = 0.3) {
-  if (!audioContext) return;
+export function playBeep(frequency = 800, duration = 200, volume = 0.5) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
 
   try {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
 
     oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(ctx.destination);
 
     oscillator.frequency.value = frequency;
     oscillator.type = 'sine';
 
-    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+    gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration / 1000);
 
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + duration / 1000);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + duration / 1000);
   } catch (error) {
-    console.log('Beep sound not supported:', error);
+    console.log('Beep sound error:', error);
   }
 }
 
 /**
- * Play popup/alert sound (lower pitch, longer)
+ * Play popup/alert sound (lower pitch, longer) - LOUD
  */
 export function playPopupSound() {
-  playBeep(600, 300, 0.25);
+  playBeep(600, 400, 0.6); // Increased volume to 0.6
 }
 
 /**
  * Play button click sound (higher pitch, short)
  */
 export function playClickSound() {
-  playBeep(1000, 100, 0.2);
+  playBeep(1000, 120, 0.4); // Increased volume to 0.4
 }
 
 /**
- * Play warning/scare sound (descending pitch)
+ * Play warning/scare sound (descending pitch) - VERY LOUD
  */
 export function playWarnSound() {
-  if (!audioContext) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
 
   try {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
 
     oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(ctx.destination);
 
     oscillator.type = 'sine';
 
     // Descending pitch effect
-    oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.4);
+    oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.4);
 
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+    gainNode.gain.setValueAtTime(0.7, ctx.currentTime); // Increased to 0.7
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
 
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.4);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.4);
   } catch (error) {
-    console.log('Warn sound not supported:', error);
+    console.log('Warn sound error:', error);
   }
 }
 
@@ -85,9 +98,12 @@ export function vibrate(pattern: number | number[] = 200) {
   if (typeof window !== 'undefined' && navigator.vibrate) {
     try {
       navigator.vibrate(pattern);
+      console.log('Vibration triggered:', pattern);
     } catch (error) {
-      console.log('Vibration not supported:', error);
+      console.log('Vibration error:', error);
     }
+  } else {
+    console.log('Vibration API not available');
   }
 }
 
@@ -96,7 +112,7 @@ export function vibrate(pattern: number | number[] = 200) {
  */
 export function triggerClickFeedback() {
   playClickSound();
-  vibrate(50); // 50ms vibration
+  vibrate(80); // Increased to 80ms vibration
 }
 
 /**
@@ -104,7 +120,7 @@ export function triggerClickFeedback() {
  */
 export function triggerAlertFeedback() {
   playPopupSound();
-  vibrate([100, 50, 100]); // Pattern: vibrate 100ms, pause 50ms, vibrate 100ms
+  vibrate([150, 75, 150]); // Longer vibration pattern
 }
 
 /**
@@ -112,5 +128,5 @@ export function triggerAlertFeedback() {
  */
 export function triggerWarnFeedback() {
   playWarnSound();
-  vibrate([200, 100, 200, 100, 200]); // Repeating pattern
+  vibrate([300, 150, 300, 150, 300]); // Much stronger vibration pattern
 }
