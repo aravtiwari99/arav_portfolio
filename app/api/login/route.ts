@@ -13,7 +13,10 @@ export async function POST(request: Request) {
   const configuredPassword = process.env.ADMIN_PASSWORD;
 
   if (!configuredUsername || !configuredPassword || typeof username !== "string" || typeof password !== "string") {
-    return NextResponse.json({ error: "Login is not configured." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Admin login is not configured on this deployment." },
+      { status: 500 },
+    );
   }
 
   const validUsername = username === configuredUsername;
