@@ -222,14 +222,9 @@ export default function Home() {
       </section>
 
       <a
-        href={
-          process.env.NEXT_PUBLIC_UMAMI_DASHBOARD_URL ||
-          "https://cloud.umami.is"
-        }
-        target="_blank"
-        rel="noreferrer"
+        href="/login"
         aria-label="Open analytics dashboard login"
-        title="Analytics dashboard login"
+        title="Admin login"
         className="fixed bottom-4 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-matrix-green/60 bg-black/80 text-matrix-green shadow-[0_0_12px_rgba(0,255,65,0.35)] transition hover:bg-matrix-green hover:text-black"
       >
         <svg
