@@ -213,39 +213,6 @@ export default function Home() {
         <h2 className="glow-text text-xl sm:text-2xl font-bold">
           $ ./connect --with=arav
         </h2>
-        <FloatingCard className="w-full">
-          <p className="text-sm sm:text-base">
-            Email:{" "}
-            <a
-              href="mailto:aravtiwari@example.com"
-              className="underline hover:text-white"
-            >
-              aravtiwari@example.com
-            </a>
-          </p>
-          <p className="mt-2 text-sm sm:text-base">
-            GitHub:{" "}
-            <a
-              href="https://github.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="underline hover:text-white"
-            >
-              github.com/aravtiwari
-            </a>
-          </p>
-          <p className="mt-2 text-sm sm:text-base">
-            LinkedIn:{" "}
-            <a
-              href="https://linkedin.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="underline hover:text-white"
-            >
-              linkedin.com/in/aravtiwari
-            </a>
-          </p>
-        </FloatingCard>
 
         <SocialLinks />
 
@@ -253,6 +220,30 @@ export default function Home() {
           © 2025 Arav Tiwari — All systems nominal.
         </p>
       </section>
+
+      <a
+        href={
+          process.env.NEXT_PUBLIC_UMAMI_DASHBOARD_URL ||
+          "https://cloud.umami.is"
+        }
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Open analytics dashboard login"
+        title="Analytics dashboard login"
+        className="fixed bottom-4 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-matrix-green/60 bg-black/80 text-matrix-green shadow-[0_0_12px_rgba(0,255,65,0.35)] transition hover:bg-matrix-green hover:text-black"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          className="h-5 w-5"
+          aria-hidden="true"
+        >
+          <path d="M20 21a8 8 0 0 0-16 0" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </a>
     </main>
   );
 }
