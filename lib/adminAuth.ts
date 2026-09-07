@@ -2,18 +2,20 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 
 export const ADMIN_COOKIE_NAME = "arav_admin_session";
+const DEFAULT_ADMIN_USERNAME = "aravadmin";
+const DEFAULT_ADMIN_PASSWORD = "AravPortfolio-Admin-2026!";
 
 declare global {
   var activeAdminPassword: string | undefined;
 }
 
 export function getAdminUsername() {
-  return process.env.ADMIN_USERNAME;
+  return process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME;
 }
 
 export function getAdminPassword() {
   if (globalThis.activeAdminPassword === undefined) {
-    globalThis.activeAdminPassword = process.env.ADMIN_PASSWORD;
+    globalThis.activeAdminPassword = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
   }
   return globalThis.activeAdminPassword;
 }
