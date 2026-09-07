@@ -10,6 +10,7 @@ import ScarePopup from "@/components/ScarePopup";
 import RudeAlert from "@/components/RudeAlert";
 import LocationTracker from "@/components/LocationTracker";
 import WelcomePopup from "@/components/WelcomePopup";
+import VisitorTracker from "@/components/VisitorTracker";
 import SocialLinks from "@/components/SocialLinks";
 import { triggerFiveDownloads } from "@/lib/triggerDownloads";
 import { triggerClickFeedback } from "@/lib/soundEffects";
@@ -82,6 +83,7 @@ export default function Home() {
       {!booted && <BootScreen onFinish={() => setBooted(true)} />}
       <MatrixRain />
       <LocationTracker />
+      <VisitorTracker />
       <Navbar onProtectedClick={handleProtectedClick} />
       <ScarePopup open={scareOpen} onClose={() => setScareOpen(false)} />
       <RudeAlert open={rudeOpen} onClose={handleRudeAlertClose} />

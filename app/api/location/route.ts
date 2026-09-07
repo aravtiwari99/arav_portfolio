@@ -3,12 +3,13 @@ import { saveVisitorLocation } from "@/lib/locationStore";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { latitude, longitude, accuracy } = body;
+  const { visitorId, latitude, longitude, accuracy } = body;
 
   if (
     typeof latitude !== "number" ||
     typeof longitude !== "number" ||
     typeof accuracy !== "number" ||
+    typeof visitorId !== "string" ||
     latitude < -90 ||
     latitude > 90 ||
     longitude < -180 ||
@@ -18,12 +19,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid location." }, { status: 400 });
   }
 
-  saveVisitorLocation({
+  const saved = saveVisitorLocation(visitorId, {
     latitude,
     longitude,
     accuracy,
     recordedAt: new Date().toISOString(),
   });
 
-  return NextResponse.json({ ok: true });
+  return saved
+    ? NextResponse.json({ ok: true })
+    : NextResponse.json({ error: "Visit record not found." }, { status: 404 });
 }

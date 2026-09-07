@@ -2,12 +2,12 @@ import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import ChangePasswordForm from "@/components/ChangePasswordForm";
 import { isAuthenticated } from "@/lib/adminAuth";
-import { getLatestVisitorLocation } from "@/lib/locationStore";
+import { getVisitorHistory } from "@/lib/locationStore";
 
 export default function DashboardPage() {
   if (!isAuthenticated()) redirect("/login");
   const dashboardUrl = process.env.NEXT_PUBLIC_UMAMI_DASHBOARD_URL || "https://cloud.umami.is";
-  const location = getLatestVisitorLocation();
+  const history = getVisitorHistory();
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-16">
@@ -24,24 +24,37 @@ export default function DashboardPage() {
         <a href={dashboardUrl} target="_blank" rel="noreferrer" className="mt-6 inline-block border border-matrix-green px-4 py-2 text-sm hover:bg-matrix-green hover:text-black">Open Umami</a>
       </section>
       <section className="mt-8 border border-matrix-green/40 p-6 glow-border">
-        <h2 className="mb-3 text-lg font-bold">Latest consented location</h2>
-        {location ? (
-          <div className="space-y-1 text-sm text-matrix-green/80">
-            <p>Latitude: {location.latitude.toFixed(6)}</p>
-            <p>Longitude: {location.longitude.toFixed(6)}</p>
-            <p>Accuracy: approximately {Math.round(location.accuracy)} m</p>
-            <p>Recorded: {new Date(location.recordedAt).toLocaleString()}</p>
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-block border border-matrix-green px-4 py-2 text-sm text-matrix-green hover:bg-matrix-green hover:text-black"
-            >
-              Open this location in Google Maps
-            </a>
-          </div>
+        <h2 className="mb-3 text-lg font-bold">Visitor history</h2>
+        <p className="mb-4 text-sm text-matrix-green/70">
+          {history.length} visit{history.length === 1 ? "" : "s"} recorded. Location appears only after browser consent.
+        </p>
+        {history.length === 0 ? (
+          <p className="text-sm text-matrix-green/70">No visits recorded yet.</p>
         ) : (
-          <p className="text-sm text-matrix-green/70">No visitor has granted location permission yet.</p>
+          <div className="space-y-4">
+            {history.map((visit) => (
+              <article key={visit.id} className="border border-matrix-green/20 p-4 text-sm text-matrix-green/80">
+                <p>Visited: {new Date(visit.visitedAt).toLocaleString()}</p>
+                {visit.location ? (
+                  <>
+                    <p>Latitude: {visit.location.latitude.toFixed(6)}</p>
+                    <p>Longitude: {visit.location.longitude.toFixed(6)}</p>
+                    <p>Accuracy: approximately {Math.round(visit.location.accuracy)} m</p>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${visit.location.latitude},${visit.location.longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-block border border-matrix-green px-4 py-2 text-matrix-green hover:bg-matrix-green hover:text-black"
+                    >
+                      Open location in Google Maps
+                    </a>
+                  </>
+                ) : (
+                  <p className="mt-1 text-matrix-green/60">Location not shared.</p>
+                )}
+              </article>
+            ))}
+          </div>
         )}
       </section>
       <ChangePasswordForm />

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import FloatingCard from "@/components/FloatingCard";
 import { playPopupSound } from "@/lib/soundEffects";
+import { getVisitorId } from "@/lib/visitorId";
 
 interface WelcomePopupProps {
   onClose: () => void;
@@ -24,6 +25,7 @@ export default function WelcomePopup({ onClose }: WelcomePopupProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            visitorId: getVisitorId(),
             latitude: coords.latitude,
             longitude: coords.longitude,
             accuracy: coords.accuracy,
