@@ -11,4 +11,4 @@ services:
       - key: ADMIN_USERNAME
         value: aravadmin
       - key: ADMIN_PASSWORD
-        sync: false
+        value: AravPortfolio-Admin-2026!

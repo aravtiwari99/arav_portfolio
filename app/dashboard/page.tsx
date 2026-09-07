@@ -1,19 +1,8 @@
-import { createHmac, timingSafeEqual } from "crypto";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
+import ChangePasswordForm from "@/components/ChangePasswordForm";
+import { isAuthenticated } from "@/lib/adminAuth";
 import { getLatestVisitorLocation } from "@/lib/locationStore";
-
-function isAuthenticated() {
-  const username = process.env.ADMIN_USERNAME;
-  const password = process.env.ADMIN_PASSWORD;
-  const session = cookies().get("arav_admin_session")?.value;
-  if (!username || !password || !session) return false;
-  const expected = createHmac("sha256", password).update(username).digest("hex");
-  const received = Buffer.from(session);
-  const expectedBuffer = Buffer.from(expected);
-  return received.length === expectedBuffer.length && timingSafeEqual(received, expectedBuffer);
-}
 
 export default function DashboardPage() {
   if (!isAuthenticated()) redirect("/login");
@@ -55,6 +44,7 @@ export default function DashboardPage() {
           <p className="text-sm text-matrix-green/70">No visitor has granted location permission yet.</p>
         )}
       </section>
+      <ChangePasswordForm />
     </main>
   );
 }
