@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid location." }, { status: 400 });
   }
 
-  const saved = saveVisitorLocation(visitorId, {
+  const saved = await saveVisitorLocation(visitorId, {
     latitude,
     longitude,
     accuracy,

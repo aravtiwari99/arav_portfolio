@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   }
 
   const { currentPassword, newPassword } = await request.json();
-  const configuredPassword = getAdminPassword();
+  const configuredPassword = await getAdminPassword();
   const username = getAdminUsername();
 
   if (
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     );
   }
 
-  changeAdminPassword(newPassword);
+  await changeAdminPassword(newPassword);
   const response = NextResponse.json({ ok: true });
   response.cookies.set(ADMIN_COOKIE_NAME, createAdminSession(username, newPassword), {
     httpOnly: true,

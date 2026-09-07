@@ -10,7 +10,7 @@ import {
 export async function POST(request: Request) {
   const { username, password } = await request.json();
   const configuredUsername = getAdminUsername();
-  const configuredPassword = getAdminPassword();
+  const configuredPassword = await getAdminPassword();
 
   if (!configuredUsername || !configuredPassword || typeof username !== "string" || typeof password !== "string") {
     return NextResponse.json(

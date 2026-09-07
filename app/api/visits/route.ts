@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid visitor ID." }, { status: 400 });
   }
 
-  recordVisit(visitorId, {
+  await recordVisit(visitorId, {
     publicIp: getPublicIp(request),
     userAgent: request.headers.get("user-agent")?.slice(0, 300),
   });

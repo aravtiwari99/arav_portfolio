@@ -5,10 +5,12 @@ import VisitorHistory from "@/components/VisitorHistory";
 import { isAuthenticated } from "@/lib/adminAuth";
 import { getVisitorHistory } from "@/lib/locationStore";
 
-export default function DashboardPage() {
-  if (!isAuthenticated()) redirect("/login");
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  if (!(await isAuthenticated())) redirect("/login");
   const dashboardUrl = process.env.NEXT_PUBLIC_UMAMI_DASHBOARD_URL || "https://cloud.umami.is";
-  const history = getVisitorHistory();
+  const history = await getVisitorHistory();
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-16">

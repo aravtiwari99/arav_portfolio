@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid visitor ID." }, { status: 400 });
   }
 
-  recordVisit(visitorId);
+  await recordVisit(visitorId);
   const ip = getClientIp(request);
   if (!ip || ip === "127.0.0.1" || ip === "::1") {
     return NextResponse.json({ error: "IP location unavailable." }, { status: 503 });
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "IP location unavailable." }, { status: 503 });
     }
 
-    saveVisitorLocation(visitorId, {
+    await saveVisitorLocation(visitorId, {
       latitude: result.latitude,
       longitude: result.longitude,
       accuracy: 25000,

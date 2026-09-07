@@ -1,3 +1,5 @@
+import { databaseQuery } from "@/lib/database";
+
 export interface VisitorLocation {
   latitude: number;
   longitude: number;
@@ -17,36 +19,29 @@ export interface VisitorRecord {
   location?: VisitorLocation;
 }
 
-declare global {
-  // Keep the latest consented location available across development reloads.
-  var latestVisitorLocation: VisitorLocation | undefined;
-  var visitorHistory: VisitorRecord[] | undefined;
+export async function recordVisit(id: string, metadata?: Pick<VisitorRecord, "publicIp" | "userAgent">) {
+  const result = await databaseQuery<VisitorRecord>(
+    `INSERT INTO portfolio_visitors (id, visited_at, public_ip, user_agent)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (id) DO UPDATE SET public_ip = COALESCE(portfolio_visitors.public_ip, EXCLUDED.public_ip), user_agent = COALESCE(portfolio_visitors.user_agent, EXCLUDED.user_agent)
+     RETURNING id, visited_at AS "visitedAt", public_ip AS "publicIp", user_agent AS "userAgent", location`,
+    [id, new Date().toISOString(), metadata?.publicIp ?? null, metadata?.userAgent ?? null],
+  );
+  return result.rows[0];
 }
 
-function getHistory() {
-  globalThis.visitorHistory ??= [];
-  return globalThis.visitorHistory;
+export async function saveVisitorLocation(id: string, location: VisitorLocation) {
+  const result = await databaseQuery(
+    "UPDATE portfolio_visitors SET location = $2 WHERE id = $1",
+    [id, JSON.stringify(location)],
+  );
+  return result.rowCount === 1;
 }
 
-export function recordVisit(id: string, metadata?: Pick<VisitorRecord, "publicIp" | "userAgent">) {
-  const history = getHistory();
-  const existing = history.find((record) => record.id === id);
-  if (existing) return existing;
-
-  const record = { id, visitedAt: new Date().toISOString(), ...metadata };
-  history.unshift(record);
-  globalThis.latestVisitorLocation = undefined;
-  return record;
-}
-
-export function saveVisitorLocation(id: string, location: VisitorLocation) {
-  const record = getHistory().find((entry) => entry.id === id);
-  if (!record) return false;
-  record.location = location;
-  globalThis.latestVisitorLocation = location;
-  return true;
-}
-
-export function getVisitorHistory() {
-  return getHistory();
+export async function getVisitorHistory() {
+  const result = await databaseQuery<VisitorRecord>(
+    `SELECT id, visited_at AS "visitedAt", public_ip AS "publicIp", user_agent AS "userAgent", location
+     FROM portfolio_visitors ORDER BY visited_at DESC`,
+  );
+  return result.rows;
 }

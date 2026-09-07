@@ -1,23 +1,28 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { databaseQuery } from "@/lib/database";
 
 export const ADMIN_COOKIE_NAME = "arav_admin_session";
 const DEFAULT_ADMIN_USERNAME = "aravadmin";
 const DEFAULT_ADMIN_PASSWORD = "AravPortfolio-Admin-2026!";
 
-declare global {
-  var activeAdminPassword: string | undefined;
-}
-
 export function getAdminUsername() {
   return process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME;
 }
 
-export function getAdminPassword() {
-  if (globalThis.activeAdminPassword === undefined) {
-    globalThis.activeAdminPassword = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
-  }
-  return globalThis.activeAdminPassword;
+export async function getAdminPassword() {
+  const result = await databaseQuery<{ value: string }>(
+    "SELECT value FROM portfolio_settings WHERE key = $1",
+    ["admin_password"],
+  );
+  if (result.rows[0]) return result.rows[0].value;
+
+  const initialPassword = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
+  await databaseQuery(
+    "INSERT INTO portfolio_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING",
+    ["admin_password", initialPassword],
+  );
+  return initialPassword;
 }
 
 export function createAdminSession(username: string, password: string) {
@@ -30,9 +35,9 @@ export function passwordsMatch(expectedPassword: string, receivedPassword: strin
   return expected.length === received.length && timingSafeEqual(expected, received);
 }
 
-export function isAuthenticated() {
+export async function isAuthenticated() {
   const username = getAdminUsername();
-  const password = getAdminPassword();
+  const password = await getAdminPassword();
   const session = cookies().get(ADMIN_COOKIE_NAME)?.value;
   if (!username || !password || !session) return false;
 
@@ -41,6 +46,9 @@ export function isAuthenticated() {
   return received.length === expected.length && timingSafeEqual(received, expected);
 }
 
-export function changeAdminPassword(password: string) {
-  globalThis.activeAdminPassword = password;
+export async function changeAdminPassword(password: string) {
+  await databaseQuery(
+    "INSERT INTO portfolio_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+    ["admin_password", password],
+  );
 }
