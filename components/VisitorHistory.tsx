@@ -72,6 +72,9 @@ export default function VisitorHistory({ history }: { history: VisitorRecord[] }
           {filteredHistory.map((visit) => (
             <article key={visit.id} className="border border-matrix-green/20 p-4 text-sm text-matrix-green/80">
               <p>Visited: {new Date(visit.visitedAt).toLocaleString()}</p>
+              <p>Public IP: {visit.publicIp || "Unavailable"}</p>
+              <p className="break-words">Browser/device: {visit.userAgent || "Unavailable"}</p>
+              <p className="text-xs text-matrix-green/60">Physical device/MAC address is not available to web browsers.</p>
               {visit.location ? (
                 <>
                   <p className="text-xs text-matrix-green/60">

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isIP } from "net";
 import { recordVisit, saveVisitorLocation } from "@/lib/locationStore";
 
 interface IpLocationResponse {
@@ -11,7 +12,8 @@ interface IpLocationResponse {
 
 function getClientIp(request: Request) {
   const forwarded = request.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0].trim() || request.headers.get("x-real-ip");
+  const candidate = forwarded?.split(",")[0].trim() || request.headers.get("x-real-ip");
+  return candidate && isIP(candidate) ? candidate : undefined;
 }
 
 export async function POST(request: Request) {

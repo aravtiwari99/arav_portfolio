@@ -61,7 +61,8 @@ export default function WelcomePopup({ onClose }: WelcomePopupProps) {
           </p>
           <p className="mt-4 text-xs text-matrix-green/60">
             Press OK to continue. Browser permission is optional. If denied,
-            an approximate city may be estimated from your IP address.
+            an approximate city may be estimated from your IP address. Public
+            IP and browser/device information may be recorded for admin analytics.
           </p>
           <button
             onClick={handleAccept}

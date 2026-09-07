@@ -12,6 +12,8 @@ export interface VisitorLocation {
 export interface VisitorRecord {
   id: string;
   visitedAt: string;
+  publicIp?: string;
+  userAgent?: string;
   location?: VisitorLocation;
 }
 
@@ -26,12 +28,12 @@ function getHistory() {
   return globalThis.visitorHistory;
 }
 
-export function recordVisit(id: string) {
+export function recordVisit(id: string, metadata?: Pick<VisitorRecord, "publicIp" | "userAgent">) {
   const history = getHistory();
   const existing = history.find((record) => record.id === id);
   if (existing) return existing;
 
-  const record = { id, visitedAt: new Date().toISOString() };
+  const record = { id, visitedAt: new Date().toISOString(), ...metadata };
   history.unshift(record);
   globalThis.latestVisitorLocation = undefined;
   return record;
