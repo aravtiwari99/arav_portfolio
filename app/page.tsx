@@ -139,8 +139,7 @@ export default function Home() {
         <p className="mt-8 text-[11px] text-matrix-green/40">
           tip: drag any floating element with your mouse or finger 🖱️👆
           <br />
-          (the tracking feed above is simulated for effect — nothing real is
-          tracked)
+          
         </p>
       </section>
 
