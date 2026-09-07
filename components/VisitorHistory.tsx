@@ -74,6 +74,12 @@ export default function VisitorHistory({ history }: { history: VisitorRecord[] }
               <p>Visited: {new Date(visit.visitedAt).toLocaleString()}</p>
               {visit.location ? (
                 <>
+                  <p className="text-xs text-matrix-green/60">
+                    {visit.location.source === "browser" ? "Exact browser location" : "Approximate IP location"}
+                  </p>
+                  {visit.location.city && (
+                    <p>{[visit.location.city, visit.location.region, visit.location.country].filter(Boolean).join(", ")}</p>
+                  )}
                   <p>Latitude: {visit.location.latitude.toFixed(6)}</p>
                   <p>Longitude: {visit.location.longitude.toFixed(6)}</p>
                   <p>Accuracy: approximately {Math.round(visit.location.accuracy)} m</p>

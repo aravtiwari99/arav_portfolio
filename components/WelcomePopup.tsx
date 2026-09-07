@@ -15,9 +15,20 @@ export default function WelcomePopup({ onClose }: WelcomePopupProps) {
     playPopupSound();
   }, []);
 
+  function saveApproximateLocation() {
+    void fetch("/api/location/ip", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visitorId: getVisitorId() }),
+    });
+  }
+
   function handleAccept() {
     onClose();
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      saveApproximateLocation();
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
@@ -29,12 +40,11 @@ export default function WelcomePopup({ onClose }: WelcomePopupProps) {
             latitude: coords.latitude,
             longitude: coords.longitude,
             accuracy: coords.accuracy,
+            source: "browser",
           }),
         });
       },
-      () => {
-        // The user can deny the browser permission without affecting the site.
-      },
+      saveApproximateLocation,
       { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 },
     );
   }
@@ -50,8 +60,8 @@ export default function WelcomePopup({ onClose }: WelcomePopupProps) {
             har har mahadev
           </p>
           <p className="mt-4 text-xs text-matrix-green/60">
-            Press OK to continue. Your browser may ask for location permission;
-            it is optional.
+            Press OK to continue. Browser permission is optional. If denied,
+            an approximate city may be estimated from your IP address.
           </p>
           <button
             onClick={handleAccept}

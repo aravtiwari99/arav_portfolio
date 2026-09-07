@@ -3,6 +3,10 @@ export interface VisitorLocation {
   longitude: number;
   accuracy: number;
   recordedAt: string;
+  source: "browser" | "ip";
+  city?: string;
+  region?: string;
+  country?: string;
 }
 
 export interface VisitorRecord {
