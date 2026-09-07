@@ -8,3 +8,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: ADMIN_USERNAME
+        value: aravadmin
+      - key: ADMIN_PASSWORD
+        sync: false
