@@ -74,12 +74,11 @@ export default function Home() {
     }
   };
 
-  if (showWelcome) {
-    return <WelcomePopup onClose={() => setShowWelcome(false)} />;
-  }
-
   return (
     <main className="relative min-h-screen w-full overflow-x-hidden">
+      {showWelcome && (
+        <WelcomePopup onClose={() => setShowWelcome(false)} />
+      )}
       {!booted && <BootScreen onFinish={() => setBooted(true)} />}
       <MatrixRain />
       <LocationTracker />
