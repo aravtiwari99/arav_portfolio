@@ -11,6 +11,8 @@
   "dependencies": {
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "8.15.19",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
     "gsap": "3.12.5",
     "next": "^14.2.35",
     "pg": "^8.13.1",

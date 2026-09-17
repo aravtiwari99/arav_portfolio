@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import ContactWidget from "@/components/ContactWidget";
 
 export const metadata: Metadata = {
   title: "Arav Tiwari | Hacker Portfolio",
@@ -17,6 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-mono bg-black text-matrix-green antialiased">
         {children}
+        <ContactWidget />
         <div className="scanlines" />
         {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
           <Script

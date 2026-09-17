@@ -17,12 +17,18 @@ function getClientIp(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { visitorId } = await request.json();
-  if (typeof visitorId !== "string" || visitorId.length < 10 || visitorId.length > 100) {
+  const { visitId, visitorId } = await request.json();
+  if (
+    typeof visitId !== "string" ||
+    visitId.length < 10 ||
+    visitId.length > 100 ||
+    typeof visitorId !== "string" ||
+    visitorId.length < 10 ||
+    visitorId.length > 100
+  ) {
     return NextResponse.json({ error: "Invalid visitor ID." }, { status: 400 });
   }
 
-  await recordVisit(visitorId);
   const ip = getClientIp(request);
   if (!ip || ip === "127.0.0.1" || ip === "::1") {
     return NextResponse.json({ error: "IP location unavailable." }, { status: 503 });
@@ -39,7 +45,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "IP location unavailable." }, { status: 503 });
     }
 
-    await saveVisitorLocation(visitorId, {
+    await saveVisitorLocation(visitId, {
       latitude: result.latitude,
       longitude: result.longitude,
       accuracy: 25000,

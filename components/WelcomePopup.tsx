@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import FloatingCard from "@/components/FloatingCard";
 import { playPopupSound } from "@/lib/soundEffects";
-import { getVisitorId } from "@/lib/visitorId";
+import { getVisitId, getVisitorId } from "@/lib/visitorId";
 
 interface WelcomePopupProps {
   onClose: () => void;
@@ -16,10 +16,11 @@ export default function WelcomePopup({ onClose }: WelcomePopupProps) {
   }, []);
 
   function saveApproximateLocation() {
+    const visitId = getVisitId();
     void fetch("/api/location/ip", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ visitorId: getVisitorId() }),
+      body: JSON.stringify({ visitId, visitorId: getVisitorId() }),
     });
   }
 
@@ -32,11 +33,12 @@ export default function WelcomePopup({ onClose }: WelcomePopupProps) {
 
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        const visitId = getVisitId();
         void fetch("/api/location", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            visitorId: getVisitorId(),
+            visitId,
             latitude: coords.latitude,
             longitude: coords.longitude,
             accuracy: coords.accuracy,

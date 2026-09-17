@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .contact-input {
+    width: 100%;
+    border: 1px solid rgb(0 255 120 / 0.35);
+    background: rgb(0 0 0 / 0.7);
+    padding: 0.6rem 0.7rem;
+    color: #b7ffce;
+    font: inherit;
+    font-size: 0.75rem;
+    outline: none;
+  }
+
+  .contact-input:focus { border-color: #00ff78; }
+}
+
 html,
 body {
   padding: 0;

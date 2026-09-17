@@ -3,13 +3,13 @@ import { saveVisitorLocation } from "@/lib/locationStore";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { visitorId, latitude, longitude, accuracy, source } = body;
+  const { visitId, latitude, longitude, accuracy, source } = body;
 
   if (
     typeof latitude !== "number" ||
     typeof longitude !== "number" ||
     typeof accuracy !== "number" ||
-    typeof visitorId !== "string" ||
+    typeof visitId !== "string" ||
     source !== "browser" ||
     latitude < -90 ||
     latitude > 90 ||
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid location." }, { status: 400 });
   }
 
-  const saved = await saveVisitorLocation(visitorId, {
+  const saved = await saveVisitorLocation(visitId, {
     latitude,
     longitude,
     accuracy,

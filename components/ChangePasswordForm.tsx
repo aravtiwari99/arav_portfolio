@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 
-export default function ChangePasswordForm() {
+export default function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -31,8 +31,8 @@ export default function ChangePasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-8 border border-matrix-green/40 p-6 glow-border">
-      <h2 className="mb-3 text-lg font-bold">Change admin password</h2>
+    <form onSubmit={handleSubmit} className={compact ? "mt-3 border-t border-matrix-green/20 pt-3" : "mt-8 border border-matrix-green/40 p-6 glow-border"}>
+      {!compact && <h2 className="mb-3 text-lg font-bold">Change admin password</h2>}
       <input
         required
         minLength={12}

@@ -1,9 +1,3 @@
-databases:
-  - name: arav-portfolio-db
-    plan: basic-256mb
-    databaseName: arav_portfolio
-    user: arav_portfolio
-
 services:
   - type: web
     name: arav-portfolio
@@ -18,7 +12,5 @@ services:
         value: aravadmin
       - key: ADMIN_PASSWORD
         value: AravPortfolio-Admin-2026!
-      - key: DATABASE_URL
-        fromDatabase:
-          name: arav-portfolio-db
-          property: connectionString
+      - key: SUPABASE_DB_URL
+        sync: false

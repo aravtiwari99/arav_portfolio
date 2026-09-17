@@ -59,7 +59,17 @@ hacker-portfolio/
    npm install
    ```
 
-3. **Run the dev server:**
+3. **Configure Supabase:**
+   Create a Supabase project, then copy the Session Pooler connection string from
+   **Project Settings → Database → Connection string** into `.env.local`:
+   ```bash
+   SUPABASE_DB_URL=postgresql://postgres.[project-ref]:[password]@[pooler-host]:5432/postgres
+   ```
+   The app creates its `portfolio_settings` and `portfolio_visitors` tables on the
+   first server-side request. Keep this value server-only; do not prefix it with
+   `NEXT_PUBLIC_`.
+
+4. **Run the dev server:**
    ```bash
    npm run dev
    ```
@@ -112,7 +122,7 @@ npm start
 
 - The Home screen profile picture is your real uploaded photo (`public/profile.jpg`), shown in a glowing circular frame with a live 3D tilt that follows your mouse (or finger) — to change the photo, just replace that file with a new image of the same name.
 - Location is optional: browser permission gives more accurate coordinates; when it is denied, the server may save an approximate city/region from the visitor IP through an IP geolocation provider. Each visit also records its timestamp, public IP, and browser user-agent for the private admin dashboard. A physical device/MAC address is not available to web browsers. Visit history and the changed admin password are stored in PostgreSQL, so they survive Render restarts and deployments.
-- Render deployment requires the `DATABASE_URL` environment variable. The included `render.yaml` provisions a durable PostgreSQL database and links it automatically. The database is separate from the web service because Render web-service memory and temporary disk are cleared on restart; the database plan may incur Render charges.
+- Deployment requires `SUPABASE_DB_URL` (or the existing `DATABASE_URL`) as a server environment variable. For Render, add the Supabase Session Pooler connection string in the service environment instead of provisioning the included Render database. The app creates its tables automatically on the first request.
 - The 5 "downloaded" files are **completely empty** — they exist only for the fun scare effect and are 100% safe.
 - The build was verified with `npm run build` before packaging — it compiles cleanly with zero TypeScript/lint errors on Next.js 14 + React 18.
 - Since this is a real animated app running in the browser, an actual screenshot depends on your browser/OS — run `npm run dev` and open `localhost:3000` to see the live, animated result (a static screenshot can't capture the code-rain motion, the floating cards, or the photo's tilt following your mouse).

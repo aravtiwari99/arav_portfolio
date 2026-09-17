@@ -8,3 +8,11 @@ export function getVisitorId() {
   sessionStorage.setItem(VISITOR_ID_KEY, id);
   return id;
 }
+
+export function getVisitId() {
+  return sessionStorage.getItem("arav_visit_id");
+}
+
+export function setVisitId(id: string) {
+  sessionStorage.setItem("arav_visit_id", id);
+}

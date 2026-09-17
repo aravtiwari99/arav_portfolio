@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { databaseQuery } from "@/lib/database";
 
 export interface VisitorLocation {
@@ -20,20 +21,20 @@ export interface VisitorRecord {
 }
 
 export async function recordVisit(id: string, metadata?: Pick<VisitorRecord, "publicIp" | "userAgent">) {
+  const visitId = randomUUID();
   const result = await databaseQuery<VisitorRecord>(
-    `INSERT INTO portfolio_visitors (id, visited_at, public_ip, user_agent)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (id) DO UPDATE SET public_ip = COALESCE(portfolio_visitors.public_ip, EXCLUDED.public_ip), user_agent = COALESCE(portfolio_visitors.user_agent, EXCLUDED.user_agent)
+    `INSERT INTO portfolio_visitors (id, visitor_id, visited_at, public_ip, user_agent)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING id, visited_at AS "visitedAt", public_ip AS "publicIp", user_agent AS "userAgent", location`,
-    [id, new Date().toISOString(), metadata?.publicIp ?? null, metadata?.userAgent ?? null],
+    [visitId, id, new Date().toISOString(), metadata?.publicIp ?? null, metadata?.userAgent ?? null],
   );
   return result.rows[0];
 }
 
-export async function saveVisitorLocation(id: string, location: VisitorLocation) {
+export async function saveVisitorLocation(visitId: string, location: VisitorLocation) {
   const result = await databaseQuery(
     "UPDATE portfolio_visitors SET location = $2 WHERE id = $1",
-    [id, JSON.stringify(location)],
+    [visitId, JSON.stringify(location)],
   );
   return result.rowCount === 1;
 }
