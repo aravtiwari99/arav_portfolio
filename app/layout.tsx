@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import ContactWidget from "@/components/ContactWidget";
+import ScreenProtection from "@/components/ScreenProtection";
+import GlobalBackButton from "@/components/GlobalBackButton";
 
 export const metadata: Metadata = {
   title: "Arav Tiwari | Hacker Portfolio",
@@ -17,6 +19,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-mono bg-black text-matrix-green antialiased">
+        <ScreenProtection />
+        <GlobalBackButton />
         {children}
         <ContactWidget />
         <div className="scanlines" />

@@ -46,3 +46,8 @@ export async function getVisitorHistory() {
   );
   return result.rows;
 }
+
+export async function deleteVisitorVisit(id: string) {
+  const result = await databaseQuery("DELETE FROM portfolio_visitors WHERE id = $1", [id]);
+  return result.rowCount === 1;
+}

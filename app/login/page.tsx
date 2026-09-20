@@ -14,18 +14,24 @@ export default function LoginPage() {
     event.preventDefault();
     setLoading(true);
     setError("");
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (response.ok) {
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError(result.error || "Login failed.");
+        setLoading(false);
+        return;
+      }
+
       router.push("/dashboard");
       router.refresh();
-    } else {
-      const result = await response.json();
-      setError(result.error || "Login failed.");
+    } catch {
+      setError("Unable to reach the server. Please try again.");
       setLoading(false);
     }
   }

@@ -3,6 +3,8 @@ import { databaseQuery } from "@/lib/database";
 
 export type Retention = "off" | "24h" | "7d" | "30d";
 
+export type MessageStatus = "sent" | "delivered" | "seen";
+
 export interface ChatMessage {
   id: string;
   conversationId: string;
@@ -11,6 +13,10 @@ export interface ChatMessage {
   createdAt: string;
   editedAt?: string;
   deleted?: boolean;
+  status?: MessageStatus;
+  replyToId?: string | null;
+  attachment?: unknown;
+  reactions?: string[];
 }
 
 export interface Conversation {
@@ -55,16 +61,63 @@ export async function createConversation(visitorKey: string, name: string, phone
   return id;
 }
 
-export async function addMessage(conversationId: string, sender: "visitor" | "admin", body: string) {
+export async function addMessage(
+  conversationId: string,
+  sender: "visitor" | "admin",
+  body: string,
+  options?: {
+    status?: MessageStatus;
+    replyToId?: string | null;
+    attachment?: unknown;
+    reactions?: string[];
+    expiresInSeconds?: number;
+  },
+) {
   const messageId = randomUUID();
   const expiry = await getRetention();
+  const messageExpiry = options?.expiresInSeconds
+    ? new Date(Date.now() + options.expiresInSeconds * 1000).toISOString()
+    : retentionExpiry(expiry);
   await databaseQuery(
-    `INSERT INTO portfolio_messages (id, conversation_id, sender, body, expires_at)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [messageId, conversationId, sender, body, retentionExpiry(expiry)],
+    `INSERT INTO portfolio_messages (id, conversation_id, sender, body, expires_at, status, reply_to_id, attachment, reactions)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [
+      messageId,
+      conversationId,
+      sender,
+      body,
+      messageExpiry,
+      options?.status ?? "sent",
+      options?.replyToId ?? null,
+      options?.attachment ? JSON.stringify(options.attachment) : null,
+      JSON.stringify(options?.reactions ?? []),
+    ],
   );
   await databaseQuery("UPDATE portfolio_conversations SET updated_at = NOW() WHERE id = $1", [conversationId]);
   return messageId;
+}
+
+export async function clearVisitorMessages(conversationId: string, visitorKey: string, everyone: boolean) {
+  const result = await databaseQuery<{ id: string }>(
+    "SELECT id FROM portfolio_conversations WHERE id = $1 AND visitor_key = $2",
+    [conversationId, visitorKey],
+  );
+  if (!result.rows[0]) return false;
+  await databaseQuery(
+    everyone
+      ? "UPDATE portfolio_messages SET deleted_for_everyone = TRUE WHERE conversation_id = $1"
+      : "UPDATE portfolio_messages SET deleted_for_visitor = TRUE WHERE conversation_id = $1",
+    [conversationId],
+  );
+  return true;
+}
+
+export async function deleteVisitorConversation(conversationId: string, visitorKey: string) {
+  const result = await databaseQuery(
+    "DELETE FROM portfolio_conversations WHERE id = $1 AND visitor_key = $2",
+    [conversationId, visitorKey],
+  );
+  return result.rowCount === 1;
 }
 
 export async function getConversation(conversationId: string) {
@@ -72,7 +125,8 @@ export async function getConversation(conversationId: string) {
     `SELECT id, conversation_id AS "conversationId", sender,
             CASE WHEN deleted_for_everyone OR deleted_for_visitor THEN '[Message deleted]' ELSE body END AS body,
             created_at AS "createdAt", edited_at AS "editedAt",
-            (deleted_for_everyone OR deleted_for_visitor) AS deleted
+            (deleted_for_everyone OR deleted_for_visitor) AS deleted,
+            status, reply_to_id AS "replyToId", attachment, reactions
      FROM portfolio_messages
      WHERE conversation_id = $1 AND (expires_at IS NULL OR expires_at > NOW())
      ORDER BY created_at ASC`,
@@ -97,7 +151,11 @@ export async function getInbox() {
               'id', m.id, 'conversationId', m.conversation_id, 'sender', m.sender,
               'body', CASE WHEN m.deleted_for_everyone OR m.deleted_for_admin THEN '[Message deleted]' ELSE m.body END,
               'createdAt', m.created_at, 'editedAt', m.edited_at,
-              'deleted', (m.deleted_for_everyone OR m.deleted_for_admin)
+              'deleted', (m.deleted_for_everyone OR m.deleted_for_admin),
+              'status', m.status,
+              'replyToId', m.reply_to_id,
+              'attachment', m.attachment,
+              'reactions', COALESCE(m.reactions, '[]'::jsonb)
             ) ORDER BY m.created_at ASC) FILTER (WHERE m.id IS NOT NULL), '[]') AS messages
      FROM portfolio_conversations c
      LEFT JOIN portfolio_messages m ON m.conversation_id = c.id
@@ -159,12 +217,54 @@ export async function updateAdminMessage(
   return true;
 }
 
+export async function updateMessageStatus(messageId: string, status: MessageStatus) {
+  await databaseQuery(
+    "UPDATE portfolio_messages SET status = $2 WHERE id = $1",
+    [messageId, status],
+  );
+}
+
+export async function toggleMessageReaction(messageId: string, conversationId: string, emoji: string) {
+  const result = await databaseQuery<{ reactions: string[] | null }>(
+    `SELECT reactions FROM portfolio_messages WHERE id = $1 AND conversation_id = $2`,
+    [messageId, conversationId],
+  );
+  const message = result.rows[0];
+  if (!message) return [];
+  const current = Array.isArray(message.reactions) ? message.reactions : [];
+  const next = current.includes(emoji)
+    ? current.filter((item) => item !== emoji)
+    : [...current, emoji];
+  await databaseQuery(
+    "UPDATE portfolio_messages SET reactions = $2 WHERE id = $1",
+    [messageId, JSON.stringify(next)],
+  );
+  return next;
+}
+
 export async function getAdminPresence() {
   const result = await databaseQuery<{ key: string; value: string }>(
     "SELECT key, value FROM portfolio_settings WHERE key IN ('admin_last_seen', 'admin_last_seen_visible')",
   );
   const values = Object.fromEntries(result.rows.map((row) => [row.key, row.value]));
   return { lastSeen: values.admin_last_seen || null, visible: values.admin_last_seen_visible !== "false" };
+}
+
+export async function markConversationSeen(conversationId: string) {
+  await databaseQuery(
+    `UPDATE portfolio_messages
+     SET status = 'seen'
+     WHERE conversation_id = $1 AND sender = 'visitor' AND status != 'seen'`,
+    [conversationId],
+  );
+}
+
+export async function markAllVisitorMessagesSeen() {
+  await databaseQuery(
+    `UPDATE portfolio_messages
+     SET status = 'seen'
+     WHERE sender = 'visitor' AND status != 'seen'`,
+  );
 }
 
 export async function touchAdminPresence() {

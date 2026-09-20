@@ -37,6 +37,8 @@ export default function ScarePopup({ open, onClose }: ScarePopupProps) {
         yoyo: true,
         delay: 0.2,
       });
+      const timer = window.setTimeout(handleClose, 3000);
+      return () => window.clearTimeout(timer);
     } else {
       // Stop continuous beep + vibration when popup closes
       stopContinuousAlertFeedback();

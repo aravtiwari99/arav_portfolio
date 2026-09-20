@@ -29,6 +29,8 @@ function isInFilter(visitedAt: string, filter: DateFilter, now: number) {
 export default function VisitorHistory({ history }: { history: VisitorRecord[] }) {
   const [filter, setFilter] = useState<DateFilter>("all");
   const [now, setNow] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     setNow(Date.now());
@@ -37,6 +39,22 @@ export default function VisitorHistory({ history }: { history: VisitorRecord[] }
   const filteredHistory = history.filter((visit) =>
     isInFilter(visit.visitedAt, filter, now || Date.now()),
   );
+
+  async function deleteSelected() {
+    if (!selected.length || !window.confirm("Delete selected visitor records permanently from Supabase?")) return;
+    await Promise.all(selected.map((id) => fetch("/api/admin/inbox/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "visitor", id }),
+    })));
+    setNotice("Selected visitor records deleted from Supabase.");
+    setSelected([]);
+    window.location.reload();
+  }
+
+  function toggleAllVisitors() {
+    setSelected((current) => current.length === filteredHistory.length ? [] : filteredHistory.map((visit) => visit.id));
+  }
 
   return (
     <section className="mt-8 border border-matrix-green/40 p-6 glow-border">
@@ -62,6 +80,9 @@ export default function VisitorHistory({ history }: { history: VisitorRecord[] }
           </select>
         </label>
       </div>
+      <button type="button" disabled={!selected.length} onClick={() => void deleteSelected()} className="mt-4 border border-red-500/60 px-3 py-2 text-xs text-red-300 disabled:opacity-40">Delete selected visitors</button>
+      <button type="button" disabled={!filteredHistory.length} onClick={toggleAllVisitors} className="ml-2 mt-4 border border-matrix-green/40 px-3 py-2 text-xs text-matrix-green disabled:opacity-40">{selected.length === filteredHistory.length ? "Clear selection" : "Select all visitors"}</button>
+      {notice && <p className="mt-2 text-xs text-yellow-300">{notice}</p>}
       <p className="mt-4 text-sm text-matrix-green/70">
         {filteredHistory.length} visit{filteredHistory.length === 1 ? "" : "s"} in selected period. Location appears only after browser consent.
       </p>
@@ -71,6 +92,7 @@ export default function VisitorHistory({ history }: { history: VisitorRecord[] }
         <div className="mt-4 space-y-4">
           {filteredHistory.map((visit) => (
             <article key={visit.id} className="border border-matrix-green/20 p-4 text-sm text-matrix-green/80">
+              <label className="mb-3 flex items-center gap-2 text-xs text-matrix-green"><input type="checkbox" checked={selected.includes(visit.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, visit.id] : current.filter((id) => id !== visit.id))} /> Select visitor record</label>
               <p>Visited: {new Date(visit.visitedAt).toLocaleString()}</p>
               <p>Public IP: {visit.publicIp || "Unavailable"}</p>
               <p className="break-words">Browser/device: {visit.userAgent || "Unavailable"}</p>

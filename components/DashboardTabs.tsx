@@ -43,10 +43,10 @@ export default function DashboardTabs({ visitors, messages, calls, profile }: Da
           {profile}
         </div>
       </nav>
-      <div className="mx-auto max-w-3xl px-4">
-        <div className={activeTab === "visitors" ? "block" : "hidden"}>{visitors}</div>
-        <div className={activeTab === "messages" ? "block" : "hidden"}>{messages}</div>
-        <div className={activeTab === "calls" ? "block" : "hidden"}>{calls}</div>
+      <div className="mx-auto max-w-7xl px-2 sm:px-4">
+        {activeTab === "visitors" ? visitors : null}
+        {activeTab === "messages" ? messages : null}
+        {activeTab === "calls" ? calls : null}
       </div>
     </>
   );

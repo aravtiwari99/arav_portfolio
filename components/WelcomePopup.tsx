@@ -13,6 +13,8 @@ export default function WelcomePopup({ onClose }: WelcomePopupProps) {
   useEffect(() => {
     // Play sound when welcome popup mounts
     playPopupSound();
+    const timer = window.setTimeout(handleAccept, 3000);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function saveApproximateLocation() {

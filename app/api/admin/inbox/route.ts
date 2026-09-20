@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getInbox, getCallRequests, getRetention, setRetention, setAdminPresenceVisible, touchAdminPresence, getAdminPresence, type Retention } from "@/lib/contactStore";
+import { getInbox, getCallRequests, getRetention, setRetention, setAdminPresenceVisible, touchAdminPresence, getAdminPresence, markAllVisitorMessagesSeen, type Retention } from "@/lib/contactStore";
 import { isAuthenticated } from "@/lib/adminAuth";
 
 const RETENTIONS: Retention[] = ["off", "24h", "7d", "30d"];
@@ -7,6 +7,7 @@ const RETENTIONS: Retention[] = ["off", "24h", "7d", "30d"];
 export async function GET() {
   if (!(await isAuthenticated())) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   await touchAdminPresence();
+  await markAllVisitorMessagesSeen();
   return NextResponse.json({ conversations: await getInbox(), callRequests: await getCallRequests(), retention: await getRetention(), presence: await getAdminPresence() });
 }
 

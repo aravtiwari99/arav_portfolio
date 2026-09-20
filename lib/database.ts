@@ -43,19 +43,7 @@ async function ensureDatabaseSchema() {
       ALTER TABLE portfolio_visitors ADD COLUMN IF NOT EXISTS visitor_id TEXT;
       UPDATE portfolio_visitors SET visitor_id = id WHERE visitor_id IS NULL;
 
-      CREATE OR REPLACE FUNCTION prevent_portfolio_visitors_delete()
-      RETURNS trigger
-      LANGUAGE plpgsql
-      AS $$
-      BEGIN
-        RAISE EXCEPTION 'portfolio_visitors is append-only';
-      END;
-      $$;
-
       DROP TRIGGER IF EXISTS portfolio_visitors_no_delete ON portfolio_visitors;
-      CREATE TRIGGER portfolio_visitors_no_delete
-      BEFORE DELETE ON portfolio_visitors
-      FOR EACH ROW EXECUTE FUNCTION prevent_portfolio_visitors_delete();
 
       CREATE TABLE IF NOT EXISTS portfolio_conversations (
         id TEXT PRIMARY KEY,
@@ -76,13 +64,28 @@ async function ensureDatabaseSchema() {
         edited_at TIMESTAMPTZ,
         deleted_for_visitor BOOLEAN NOT NULL DEFAULT FALSE,
         deleted_for_admin BOOLEAN NOT NULL DEFAULT FALSE,
-        deleted_for_everyone BOOLEAN NOT NULL DEFAULT FALSE
+        deleted_for_everyone BOOLEAN NOT NULL DEFAULT FALSE,
+        status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'delivered', 'seen')),
+        reply_to_id TEXT,
+        attachment JSONB
       );
 
       ALTER TABLE portfolio_messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
       ALTER TABLE portfolio_messages ADD COLUMN IF NOT EXISTS deleted_for_visitor BOOLEAN NOT NULL DEFAULT FALSE;
       ALTER TABLE portfolio_messages ADD COLUMN IF NOT EXISTS deleted_for_admin BOOLEAN NOT NULL DEFAULT FALSE;
       ALTER TABLE portfolio_messages ADD COLUMN IF NOT EXISTS deleted_for_everyone BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE portfolio_messages ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'sent';
+      ALTER TABLE portfolio_messages ADD COLUMN IF NOT EXISTS reply_to_id TEXT;
+      ALTER TABLE portfolio_messages ADD COLUMN IF NOT EXISTS attachment JSONB;
+      ALTER TABLE portfolio_messages ADD COLUMN IF NOT EXISTS reactions JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+      UPDATE portfolio_messages
+      SET status = 'sent'
+      WHERE status IS NULL OR status NOT IN ('sent', 'delivered', 'seen');
+
+      UPDATE portfolio_messages
+      SET reactions = '[]'::jsonb
+      WHERE reactions IS NULL;
 
       CREATE TABLE IF NOT EXISTS portfolio_call_requests (
         id TEXT PRIMARY KEY,

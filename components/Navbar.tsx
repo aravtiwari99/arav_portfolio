@@ -14,11 +14,11 @@ const links = [
 
 export default function Navbar({ onProtectedClick }: NavbarProps) {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-matrix-green/30 bg-black/70 backdrop-blur-md px-4 sm:px-8 py-3">
-      <span className="glow-text font-bold tracking-widest text-sm sm:text-base">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-matrix-green/30 bg-black/70 px-3 py-2 backdrop-blur-md sm:flex-nowrap sm:px-8 sm:py-3">
+      <span className="glow-text shrink-0 font-bold tracking-widest text-xs sm:text-base">
         &lt;ARAV_TIWARI /&gt;
       </span>
-      <div className="flex gap-3 sm:gap-6 text-xs sm:text-sm">
+      <div className="flex min-w-0 flex-wrap justify-end gap-x-2 gap-y-1 text-[10px] sm:gap-6 sm:text-sm">
         {links.map((link) => (
           <a
             key={link.label}

@@ -29,6 +29,32 @@ body {
 
 * {
   box-sizing: border-box;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+img,
+video {
+  -webkit-user-drag: none;
+}
+
+html.screen-hidden::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+}
+
+@media print {
+  body { display: none !important; }
+}
+
+@media (max-width: 640px) {
+  .contact-input { font-size: 16px; }
+  .fixed.inset-0[aria-label="Chat with Goldi"] > section,
+  .fixed.inset-0.z-\[260\] > section { border-left: 0; border-right: 0; }
 }
 
 ::-webkit-scrollbar {

@@ -29,6 +29,8 @@ export default function RudeAlert({ open, onClose }: RudeAlertProps) {
         yoyo: true,
         delay: 0.15,
       });
+      const timer = window.setTimeout(handleClose, 3000);
+      return () => window.clearTimeout(timer);
     } else {
       // Stop continuous beep + vibration when alert closes
       stopContinuousAlertFeedback();

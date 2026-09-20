@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-type Message = { id: string; sender: "visitor" | "admin"; body: string; createdAt: string; editedAt?: string; deleted?: boolean };
+type Attachment = { kind: "image" | "video" | "audio" | "document" | "gif"; name: string; mime: string; data: string };
+type Message = { id: string; sender: "visitor" | "admin"; body: string; createdAt: string; editedAt?: string; deleted?: boolean; attachment?: Attachment | null; reactions?: string[] };
 type Conversation = { id: string; visitorName: string; phone?: string; updatedAt: string; messages: Message[] };
 type CallRequest = { id: string; visitorName: string; phone?: string; reason: string; createdAt: string; status: string };
 type InboxView = "messages" | "calls";
@@ -17,23 +18,36 @@ export default function AdminInbox({ view }: { view: InboxView }) {
   const [selectedCalls, setSelectedCalls] = useState<string[]>([]);
   const [reply, setReply] = useState("");
   const [notice, setNotice] = useState("");
+  const selectedRef = useRef("");
 
   async function load() {
-    const response = await fetch("/api/admin/inbox");
+    const response = await fetch("/api/admin/inbox", { cache: "no-store" });
     if (!response.ok) return;
     const result = await response.json();
-    setConversations(result.conversations);
+    setConversations((current) => {
+      const activeId = selectedRef.current;
+      const currentActive = current.find((item) => item.id === activeId);
+      const nextActive = result.conversations.find((item: Conversation) => item.id === activeId);
+      if (currentActive && nextActive && currentActive.updatedAt === nextActive.updatedAt) {
+        return result.conversations.map((item: Conversation) => item.id === selected ? currentActive : item);
+      }
+      return result.conversations;
+    });
     setCalls(result.callRequests);
     setRetention(result.retention);
     setPresenceVisible(result.presence?.visible ?? true);
-    if (!selected && result.conversations[0]) setSelected(result.conversations[0].id);
+    setSelected((current) => {
+      const next = current || result.conversations[0]?.id || "";
+      selectedRef.current = next;
+      return next;
+    });
   }
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 5000);
+    const timer = window.setInterval(() => void load(), 1000);
     return () => window.clearInterval(timer);
-  }, [selected]);
+  }, []);
 
   async function deleteItems(type: "conversation" | "call", ids: string[]) {
     if (!ids.length || !window.confirm(type === "conversation" ? "Delete selected chat history permanently?" : "Delete selected call requests permanently?")) return;
@@ -44,6 +58,7 @@ export default function AdminInbox({ view }: { view: InboxView }) {
     })));
     if (type === "conversation") {
       setSelectedConversations([]);
+      selectedRef.current = "";
       setSelected("");
     } else {
       setSelectedCalls([]);
@@ -52,14 +67,32 @@ export default function AdminInbox({ view }: { view: InboxView }) {
     void load();
   }
 
+  function toggleAllConversations() {
+    setSelectedConversations((current) => current.length === conversations.length ? [] : conversations.map((item) => item.id));
+  }
+
+  function toggleAllCalls() {
+    setSelectedCalls((current) => current.length === calls.length ? [] : calls.map((item) => item.id));
+  }
+
   async function sendReply() {
     if (!reply.trim() || !selected) return;
+    const replyText = reply.trim();
+    const optimisticMessage: Message = {
+      id: `optimistic-${Date.now()}`,
+      sender: "admin",
+      body: replyText,
+      createdAt: new Date().toISOString(),
+    };
+    setConversations((current) => current.map((conversation) => conversation.id === selected
+      ? { ...conversation, updatedAt: optimisticMessage.createdAt, messages: [...conversation.messages, optimisticMessage] }
+      : conversation));
+    setReply("");
     await fetch("/api/admin/inbox/reply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ conversationId: selected, message: reply }),
+      body: JSON.stringify({ conversationId: selected, message: replyText }),
     });
-    setReply("");
     setNotice("Reply sent");
     void load();
   }
@@ -123,6 +156,7 @@ export default function AdminInbox({ view }: { view: InboxView }) {
             <p className="mt-1 text-xs text-matrix-green/60">Select requests to permanently delete them.</p>
           </div>
           <button type="button" disabled={!selectedCalls.length} onClick={() => void deleteItems("call", selectedCalls)} className="border border-red-500/60 px-3 py-2 text-xs text-red-300 disabled:opacity-40">Delete selected</button>
+          <button type="button" disabled={!calls.length} onClick={toggleAllCalls} className="border border-matrix-green/40 px-3 py-2 text-xs text-matrix-green disabled:opacity-40">{selectedCalls.length === calls.length ? "Clear selection" : "Select all"}</button>
         </div>
         {calls.length === 0 ? <p className="mt-4 text-xs text-matrix-green/60">No call requests yet.</p> : (
           <div className="mt-4 space-y-2">
@@ -147,7 +181,7 @@ export default function AdminInbox({ view }: { view: InboxView }) {
   }
 
   return (
-    <section className="mt-8 border border-matrix-green/40 p-6 glow-border">
+    <section className="mx-auto mt-4 min-h-[calc(100vh-9rem)] w-full border border-matrix-green/40 p-3 glow-border sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">Messages</h2>
@@ -159,23 +193,28 @@ export default function AdminInbox({ view }: { view: InboxView }) {
         </div>
       </div>
       <button type="button" disabled={!selectedConversations.length} onClick={() => void deleteItems("conversation", selectedConversations)} className="mt-4 border border-red-500/60 px-3 py-2 text-xs text-red-300 disabled:opacity-40">Delete selected chats</button>
-      <div className="mt-4 grid gap-5 md:grid-cols-[minmax(150px,0.8fr)_minmax(0,1.2fr)]">
-        <div className="space-y-2">
+      <button type="button" disabled={!conversations.length} onClick={toggleAllConversations} className="ml-2 mt-4 border border-matrix-green/40 px-3 py-2 text-xs text-matrix-green disabled:opacity-40">{selectedConversations.length === conversations.length ? "Clear selection" : "Select all chats"}</button>
+      <div className="mt-4 grid min-h-[calc(100vh-18rem)] gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="max-h-[calc(100vh-18rem)] space-y-2 overflow-y-auto">
           {conversations.length === 0 ? <p className="text-xs text-matrix-green/60">No conversations yet.</p> : conversations.map((item) => (
             <div key={item.id} className={`flex w-full gap-2 border p-3 text-left text-xs ${selected === item.id ? "border-matrix-green bg-matrix-green/10" : "border-matrix-green/20"}`}>
               <input type="checkbox" checked={selectedConversations.includes(item.id)} onChange={(event) => setSelectedConversations((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))} />
-              <button type="button" onClick={() => setSelected(item.id)} className="min-w-0 text-left"><span className="block font-bold">{item.visitorName}</span><span className="text-matrix-green/60">{new Date(item.updatedAt).toLocaleString()}</span></button>
+              <button type="button" onPointerDown={() => { selectedRef.current = item.id; setSelected(item.id); }} onClick={() => { selectedRef.current = item.id; setSelected(item.id); }} className="min-w-0 text-left"><span className="block font-bold">{item.visitorName}</span><span className="text-matrix-green/60">{new Date(item.updatedAt).toLocaleString()}</span></button>
             </div>
           ))}
         </div>
-        <div className="border border-matrix-green/20 p-3">
+        <div className="flex min-h-[calc(100vh-18rem)] flex-col border border-matrix-green/20 p-3">
           {active ? (
             <>
               <p className="mb-3 text-xs text-matrix-green/60">{active.visitorName}{active.phone ? ` · ${active.phone}` : ""}</p>
-              <div className="max-h-60 space-y-2 overflow-y-auto">
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
                 {active.messages.map((item) => (
                   <div key={item.id} className={`group max-w-[88%] rounded px-3 py-2 text-xs ${item.sender === "admin" ? "ml-auto bg-matrix-green/15" : "mr-auto bg-white/10"}`}>
+                    {item.attachment && <div className="mb-2 overflow-hidden border border-matrix-green/20 bg-black/20 p-1">
+                      {item.attachment.kind === "image" || item.attachment.kind === "gif" ? <img src={item.attachment.data} alt={item.attachment.name} className="max-h-48 max-w-full object-contain" /> : item.attachment.kind === "video" ? <video controls src={item.attachment.data} className="max-h-48 max-w-full" /> : item.attachment.kind === "audio" ? <audio controls src={item.attachment.data} className="max-w-full" /> : <a href={item.attachment.data} download={item.attachment.name} className="block p-2 underline">{item.attachment.name}</a>}
+                    </div>}
                     <p><span className="mr-2 text-[10px] text-matrix-green/50">{item.sender}</span>{item.body}</p>
+                    {item.reactions && item.reactions.length > 0 && <div className="mt-1 text-sm">{item.reactions.join(" ")}</div>}
                     {item.sender === "admin" && !item.deleted && canChange(item.createdAt) && <div className="mt-1 flex gap-2 text-[9px] opacity-70"><button onClick={() => void changeMessage(item.id, "edit", item.body)}>Edit</button><button onClick={() => void changeMessage(item.id, "delete-everyone", item.body)}>Delete</button></div>}
                   </div>
                 ))}
