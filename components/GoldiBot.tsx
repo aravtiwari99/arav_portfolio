@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type BotMessage = {
   id: string;
@@ -128,6 +128,7 @@ export default function GoldiBot({ enabled, visitorName, onSwitchToArav }: { ena
   const [messages, setMessages] = useState<BotMessage[]>([]);
   const [typing, setTyping] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!enabled || !visitorName.trim()) return;
@@ -163,6 +164,12 @@ export default function GoldiBot({ enabled, visitorName, onSwitchToArav }: { ena
   useEffect(() => {
     if (messages.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (contentRef.current) contentRef.current.scrollTop = contentRef.current.scrollHeight;
+    });
+  }, [messages, open]);
 
   function sendMessage() {
     const text = input.trim();
@@ -215,12 +222,12 @@ export default function GoldiBot({ enabled, visitorName, onSwitchToArav }: { ena
 
   return (
     <div className="fixed inset-0 z-[260] bg-black/85 backdrop-blur-sm">
-      <section className="mx-auto flex h-screen w-full max-w-5xl flex-col border-x border-matrix-green/30 bg-[#07140f] shadow-[0_0_60px_rgba(0,255,120,0.12)]" aria-label="Chat with Goldi">
+      <section className="mx-auto flex h-[100dvh] max-h-[900px] w-full max-w-5xl min-h-0 flex-col border-x border-matrix-green/30 bg-[#07140f] shadow-[0_0_60px_rgba(0,255,120,0.12)]" aria-label="Chat with Goldi">
           <header className="flex items-center justify-between border-b border-matrix-green/20 bg-[#0a1916] px-4 py-3 sm:px-6">
             <div className="flex items-center gap-3"><button type="button" onClick={() => setOpen(false)} className="rounded-full border border-matrix-green/30 px-2 py-1 text-xs text-matrix-green" aria-label="Go back from Goldi chat">←</button><button type="button" onClick={() => setPhotoOpen(true)} className="h-10 w-10 overflow-hidden rounded-full border border-matrix-green/60" aria-label="View Goldi profile photo"><img src={GOLDI_PHOTO} alt="Goldi, curly-haired girl" className="h-full w-full object-cover" /></button><div><p className="text-base font-bold text-matrix-green">Goldi</p><p className="text-[10px] text-matrix-green/60">25 years · always online</p></div></div>
             <div />
           </header>
-          <div className="flex-1 space-y-2 overflow-y-auto bg-[radial-gradient(circle_at_top,_rgba(0,255,128,0.08),_transparent_55%)] px-4 py-4"><p className="border-b border-matrix-green/20 pb-2 text-[10px] uppercase tracking-[0.2em] text-matrix-green/60">End-to-end style local chat memory</p>{messages.map((item) => <div key={item.id} className={`max-w-[78%] rounded-2xl border px-3 py-2 text-sm ${item.sender === "user" ? "ml-auto border-matrix-green/40 bg-matrix-green/15 text-matrix-green" : "border-matrix-green/20 bg-[#10251f] text-matrix-green"}`}><p className="whitespace-pre-wrap break-words">{item.body}</p>{item.sender === "user" && <div className="mt-2 flex justify-end text-[13px] font-bold leading-none text-cyan-300" aria-label="Message read">✓✓</div>}</div>)}{typing && <div className="max-w-[78%] rounded-2xl border border-matrix-green/20 bg-[#10251f] px-3 py-2 text-sm italic text-matrix-green/60">Goldi is typing...</div>}</div>
+          <div ref={contentRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-[radial-gradient(circle_at_top,_rgba(0,255,128,0.08),_transparent_55%)] px-3 py-3 sm:px-4 sm:py-4"><p className="border-b border-matrix-green/20 pb-2 text-[10px] uppercase tracking-[0.2em] text-matrix-green/60">End-to-end style local chat memory</p>{messages.map((item) => <div key={item.id} className={`max-w-[78%] rounded-2xl border px-3 py-2 text-sm ${item.sender === "user" ? "ml-auto border-matrix-green/40 bg-matrix-green/15 text-matrix-green" : "border-matrix-green/20 bg-[#10251f] text-matrix-green"}`}><p className="whitespace-pre-wrap break-words">{item.body}</p>{item.sender === "user" && <div className="mt-2 flex justify-end text-[13px] font-bold leading-none text-cyan-300" aria-label="Message read">✓✓</div>}</div>)}{typing && <div className="max-w-[78%] rounded-2xl border border-matrix-green/20 bg-[#10251f] px-3 py-2 text-sm italic text-matrix-green/60">Goldi is typing...</div>}</div>
           <div className="border-t border-matrix-green/20 bg-[#0a1916] p-3"><div className="mb-2 flex gap-2 text-[10px]"><button type="button" onClick={() => { setOpen(false); onSwitchToArav(); }} className="text-matrix-green underline">Chat with Arav</button><button type="button" onClick={() => { setMessages([initialMessage()]); setProfile({}); localStorage.removeItem(NAME_KEY); localStorage.removeItem(PROFILE_KEY); }} className="text-matrix-green/60">Clear Goldi chat</button></div><div className="flex flex-wrap items-end gap-2 sm:flex-nowrap"><button type="button" onClick={() => setInput((value) => `${value}😊`)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 p-2 text-lg text-cyan-200" aria-label="Add emoji">😊</button><textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(); } }} placeholder="Type a message" rows={1} className="min-h-[42px] min-w-[min(180px,100%)] flex-1 resize-none rounded-full border border-matrix-green/30 bg-black/30 px-3 py-2 text-sm text-matrix-green placeholder:text-matrix-green/40" aria-label="Message Goldi" /><button type="button" onClick={sendMessage} className="rounded-full border border-matrix-green bg-matrix-green px-4 py-2 text-sm font-bold text-black">Send</button></div></div>
       </section>
       {photoOpen && <button type="button" onClick={() => setPhotoOpen(false)} className="fixed inset-0 z-[300] flex items-center justify-center bg-black/95 p-6" aria-label="Close Goldi profile photo"><img src={GOLDI_PHOTO} alt="Goldi" className="max-h-full max-w-full object-contain" /></button>}

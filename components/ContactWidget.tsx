@@ -80,6 +80,7 @@ export default function ContactWidget() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -221,8 +222,13 @@ export default function ContactWidget() {
   }, [conversationId]);
 
   useEffect(() => {
-    if (!contentRef.current) return;
-    contentRef.current.scrollTop = contentRef.current.scrollHeight;
+    requestAnimationFrame(() => {
+      if (bottomRef.current) {
+        bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      } else if (contentRef.current) {
+        contentRef.current.scrollTop = contentRef.current.scrollHeight;
+      }
+    });
   }, [messages, open]);
 
   async function startChat() {
@@ -510,7 +516,7 @@ export default function ContactWidget() {
       }} />
       {open && (
         <div className="fixed inset-0 z-[260] bg-black/85 backdrop-blur-sm">
-          <div className="mx-auto flex h-screen w-full max-w-5xl flex-col border-x border-matrix-green/30 bg-[#07140f] shadow-[0_0_60px_rgba(0,255,120,0.12)]">
+          <div className="mx-auto flex h-[100dvh] max-h-[900px] w-full max-w-5xl min-h-0 flex-col border-x border-matrix-green/30 bg-[#07140f] shadow-[0_0_60px_rgba(0,255,120,0.12)]">
             <header className="flex items-center justify-between border-b border-matrix-green/20 bg-[#0a1916] px-4 py-3 sm:px-6">
               <div className="flex items-center gap-3">
                 <button onClick={() => setOpen(false)} className="rounded-full border border-matrix-green/30 px-2 py-1 text-lg leading-none text-matrix-green" aria-label="Go back from Arav chat">←</button>
@@ -587,12 +593,12 @@ export default function ContactWidget() {
             {conversationId && mode === "chat" ? (
               <>
                 {aravWarning && <div className="mx-4 mt-3 rounded-md border border-yellow-400/50 bg-yellow-400/10 px-3 py-2 text-center text-[11px] text-yellow-200">For security, your IP address and approximate location may be processed. Please think carefully before sending a message.</div>}
-                <div className="flex flex-1 flex-col overflow-hidden">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                   <div className="border-b border-matrix-green/20 bg-[#0d1e1a] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-matrix-green/60">
                     <span>Chat</span>
                   </div>
 
-                  <div ref={contentRef} className="flex-1 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_top,_rgba(0,255,128,0.08),_transparent_55%)] px-4 py-4">
+                  <div ref={contentRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_top,_rgba(0,255,128,0.08),_transparent_55%)] px-3 py-3 sm:px-4 sm:py-4">
                     {messages.map((item) => {
                       const isVisitor = item.sender === "visitor";
                       const replyTarget = messages.find((message) => message.id === item.replyToId);
@@ -673,6 +679,7 @@ export default function ContactWidget() {
                         </div>
                       );
                     })}
+                    <div ref={bottomRef} aria-hidden="true" />
                   </div>
 
                   <div className="border-t border-matrix-green/20 bg-[#0a1916] p-3">
